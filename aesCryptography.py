@@ -22,38 +22,64 @@ class AesCryptoGraphy:
 
     def encrypt(self, plainData):
         #Converting plainData from string to bytes format
+        isString = False
         if type(plainData) != bytes:
+            isString = True
             plainData = plainData.encode()
-        
         #Encryption Process
         plainData = pad(plainData, AES.block_size)
         cipherData = self.cipher.encrypt(plainData)
         #Converting cipherData from bytes to string format
-        cipherData = b64encode(cipherData).decode()
-        return cipherData
+        cipherData = b64encode(cipherData)
+        return cipherData.decode() if isString else cipherData
 
     def decrypt(self, cipherData):
         #Converting cipherData from string to bytes format
+        isString = False
         if type(cipherData) != bytes:
-            cipherData = b64decode(cipherData)
+            isString = True
+            cipherData = cipherData.encode()
+        cipherData = b64decode(cipherData)
         #Decryption Process
         decryptedData = self.decipher.decrypt(cipherData)
         decryptedData = unpad(decryptedData, AES.block_size)
         #Converting decryptedData from bytes to string format
-        decryptedData = decryptedData.decode()
-        return decryptedData
+        #decryptedData = decryptedData.decode()
+        return decryptedData.decode() if isString else decryptedData
 
+def splitExtension(fullpath):
+    import os
+    from pathlib import Path
+
+    #Making necessary opeartions in the string to take are of escape characters and slashes
+    fullpath = repr(fullpath)[1:-1].replace("\\x", "\\\\")
+
+
+    fullpath = Path(fullpath)
+
+    filename, ext = os.path.splitext(fullpath)
+    return filename, ext
 
 if __name__ == "__main__":
     password = input("Give me a password: ").strip()
     cryptographer = AesCryptoGraphy(password)
-    plainText = input("What's your secret message: \n")
-    encrypted = cryptographer.encrypt(plainText)
-    print("Encrypted Text:",encrypted)
+    #plainText = input("What's your secret message: \n")
+    filepath = "AES Cryptographer\Dataset\Text\SomeText.txt"
+    filename, ext = splitExtension(filepath)
 
-    decrypted = cryptographer.decrypt(encrypted)
-    print("Decrypted Text:", decrypted)
-    if plainText == decrypted:
-        print(True)
+    with open(filename+ext, "rb") as d:
+        plainText = d.read()
+        encrypted = cryptographer.encrypt(plainText)
+        #print("Encrypted Text:",encrypted)
+        with open(filename+ext+".enc", "wb") as e:
+            e.write(encrypted)
+    print("Encryption Done")
+
+    with open(filename+ext+".enc", "rb") as d:
+        encrypted = d.read()
+        decrypted = cryptographer.decrypt(encrypted)
+        with open(filename+"_Decrypted"+ext, "wb") as e:
+            e.write(decrypted)
+    print("Decryption Done")
 
 
